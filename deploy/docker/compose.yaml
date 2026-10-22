@@ -1,0 +1,25 @@
+name: deepseek-harness
+
+services:
+  dsh:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    image: deepseek-harness:local
+    restart: unless-stopped
+    stop_grace_period: 30s
+    ports:
+      - "${DSH_BIND_ADDRESS:-127.0.0.1}:${DSH_PORT:-3080}:${DSH_WEB_PORT:-3080}"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ${DSH_HOME_VOLUME:-dsh-home}:/home/dsh/.dsh
+      - ${DSH_AGENTS_VOLUME:-dsh-agents}:/home/dsh/.agents
+      - ${DSH_WORKSPACE_DIR:-./workspace}:/workspace
+
+volumes:
+  dsh-home:
+    name: deepseek-harness-dsh-home
+  dsh-agents:
+    name: deepseek-harness-dsh-agents

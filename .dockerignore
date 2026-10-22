@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/lib
+**/dist
+**/coverage
+**/*.tsbuildinfo
+.artifacts
+.dsh-build
+.dsh-report
+.worktrees
+worktrees
+.env
+**/.env
+deploy/docker/data
+deploy/docker/workspace

@@ -47,3 +47,9 @@ worktrees/
 .agents/worktrees/
 .typert-*/
 native/system/test/bin/
+
+# Docker deployment state (bind mounts and workspace projects)
+deploy/docker/data/
+deploy/docker/workspace/*
+!deploy/docker/workspace/.gitkeep
+deploy/docker/.env
