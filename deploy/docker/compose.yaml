@@ -8,6 +8,8 @@ services:
     image: deepseek-harness:local
     restart: unless-stopped
     stop_grace_period: 30s
+    # Host-only by default. For LAN access set DSH_BIND_ADDRESS=0.0.0.0 in .env
+    # and add a stable host name (not a DHCP address) to DSH_TRUSTED_HOSTS.
     ports:
       - "${DSH_BIND_ADDRESS:-127.0.0.1}:${DSH_PORT:-3080}:${DSH_WEB_PORT:-3080}"
     env_file:

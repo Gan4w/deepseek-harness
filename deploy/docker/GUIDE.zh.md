@@ -30,6 +30,8 @@ docker compose logs -f dsh
 
 `docker compose down` 会保留两个命名卷。`docker compose down -v` 会删除它们，包括配置、凭据、会话和插件。除非同时挂载了新路径，否则不要覆盖 `DSH_HOME` 或 `DSH_AGENTS_HOME`。
 
+目录选择器的“主目录”是容器的 `$HOME`，即 `/home/dsh`；在那里创建的内容只存在于容器可写层，容器重建后就会消失。在环境中设置 `HOME=/workspace` 可把工作区作为选择器主目录；`DSH_HOME` 和 `DSH_AGENTS_HOME` 仍使用各自的挂载路径。
+
 要用宿主机目录代替命名卷，请在 `.env` 中把 `DSH_HOME_VOLUME` 和 `DSH_AGENTS_VOLUME` 设置为绑定路径：
 
 ```sh
@@ -82,7 +84,9 @@ docker compose run --rm --entrypoint dsh dsh plugin --profile web add <package>
 
 - 本机访问：保持 `DSH_BIND_ADDRESS=127.0.0.1`（默认值），使用打印出的 URL。
 - 修改宿主机端口：把 `DSH_PORT` 设为宿主机端口，并把 `DSH_PUBLIC_URL` 设为对应的 URL。
-- 通过 IP 或主机名远程访问：设置 `DSH_BIND_ADDRESS=0.0.0.0`，把该 authority 加入 `DSH_TRUSTED_HOSTS`，并把 `DSH_PUBLIC_URL` 设为浏览器使用的 URL。信任校验会以 403 拒绝未知的 Host/Origin authority。
+- 局域网访问：设置 `DSH_BIND_ADDRESS=0.0.0.0`，把稳定的主机名加入 `DSH_TRUSTED_HOSTS`，并把 `DSH_PUBLIC_URL` 设为浏览器使用的 URL。
+- 使用主机名而不是 IP 地址。DHCP 续租会改变 IP 并迫使修改信任配置，而计算机名、mDNS `.local` 名或 DNS 记录不受影响。不带端口的条目匹配任意端口；信任栅栏不支持通配符或网段，未知 authority 的每个 API 调用都会返回 403，包括工作区目录选择器，即使页面本身已经打开。
+- 隧道或反向代理：指向已发布的端口，原样保留浏览器 `Host` 头，并转发 WebSocket `Upgrade` 请求。把公网域名加入 `DSH_TRUSTED_HOSTS`，并把 `DSH_PUBLIC_URL` 设为公网 URL。Cookie 绑定单个 authority，因此局域网主机名和隧道域名各自需要一次启动令牌交换；把 `Host` 改写成 loopback 名的代理会让 `Origin` 与 `Host` 不一致。
 - 反向代理与 TLS：遵循[公开部署指南](../../docs/user/guide/public-deployments.zh.md)。在代理处终止 TLS，或把 `DSH_TLS_CERT`/`DSH_TLS_KEY` 传给 entrypoint，并公布 `https://` URL。
 
 任何能访问该端口并取得启动 token 的人都能控制 agent，而 agent 可以在容器内执行命令。请只把端口发布到可信网络。

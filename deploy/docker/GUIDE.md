@@ -30,6 +30,8 @@ The first build installs the pnpm workspace and compiles every artifact. Expect 
 
 `docker compose down` keeps both named volumes. `docker compose down -v` deletes them, including configuration, credentials, sessions, and plugins. Do not override `DSH_HOME` or `DSH_AGENTS_HOME` unless you also mount the new paths.
 
+The directory picker's home is the container `$HOME`, `/home/dsh`; anything created there lives only in the container layer and disappears when the container is recreated. Set `HOME=/workspace` in the environment to make the workspace the picker home; `DSH_HOME` and `DSH_AGENTS_HOME` keep their mounted paths.
+
 To use host directories instead of named volumes, set `DSH_HOME_VOLUME` and `DSH_AGENTS_VOLUME` in `.env` to bind paths:
 
 ```sh
@@ -82,7 +84,9 @@ The image includes pnpm, Git, and OpenSSH, so registry and Git-hosted plugins wo
 
 - Local access: keep `DSH_BIND_ADDRESS=127.0.0.1` (the default) and use the printed URL.
 - Changed host port: set `DSH_PORT` to the host port and `DSH_PUBLIC_URL` to the matching URL.
-- Remote access by IP or host name: set `DSH_BIND_ADDRESS=0.0.0.0`, add the authority to `DSH_TRUSTED_HOSTS`, and set `DSH_PUBLIC_URL` to the URL browsers use. The trust fence rejects unknown Host/Origin authorities with 403.
+- LAN access: set `DSH_BIND_ADDRESS=0.0.0.0`, add a stable host name to `DSH_TRUSTED_HOSTS`, and set `DSH_PUBLIC_URL` to the URL browsers use.
+- Use a host name, not an IP address. A DHCP lease change forces an IP entry to be edited, while the machine name, an mDNS `.local` name, or a DNS record survives it. A port-less entry matches every port; the fence has no wildcard or CIDR form, and an unknown authority returns 403 for every API call, including the workspace directory picker, even when the page itself loaded.
+- Tunnel or reverse proxy: point it at the published port, keep the browser `Host` header unchanged, and forward WebSocket `Upgrade` requests. Add the public domain to `DSH_TRUSTED_HOSTS` and set `DSH_PUBLIC_URL` to the public URL. Cookies bind to one authority, so the LAN name and the tunnel domain each need their own launch-token exchange, and a proxy that rewrites `Host` to a loopback name makes `Origin` and `Host` disagree.
 - Reverse proxy and TLS: follow [public deployments](../../docs/user/guide/public-deployments.md). Terminate TLS at the proxy or pass `DSH_TLS_CERT`/`DSH_TLS_KEY` to the entrypoint and advertise an `https://` URL.
 
 Anyone who can reach the port and obtain the startup token can control the agent, which can execute commands inside the container. Publish the port only to trusted networks.
